@@ -81,10 +81,13 @@ service asus_factoryprop /system/bin/init.asus.factoryprop.sh
 
 on property:sys.boot_completed=1
     start asus-post-boot
+    start mpdecision
 
 service system_resize /sbin/resize2fs_s -Ff /dev/block/platform/msm_sdcc.1/by-name/system 512M
    user root
    oneshot
    seclabel u:r:system_resize:s0
 
-
+service mpdecision /sbin/mpdecision --avg_comp
+   user root
+   disabled
