@@ -1,0 +1,56 @@
+#
+# init.asus.asdf.rc
+#
+# This file contains settings and services of
+# Abnormal Shutdown Detection Feature (ASDF)
+# This can help us to analysis any abnormal issue to improve
+# shipping quality
+#
+on init
+    mkdir /asdf 0771 system system
+
+on post-fs-data
+    mkdir /data/user_logcat 0775 root root
+
+# Trigger ASDF and save last_kmsg for ASIT
+    chmod 0777 /proc/asusdebug
+    write /proc/asusdebug load
+    write /proc/asusdebug get_asdf_log
+
+# Pack last shutdown kernel log for further using
+service asus_chk_asdf /system/bin/init.asus.check_asdf.sh
+    user root
+    group root
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1
+    start asus_chk_asdf
+
+# Enable log recorder feature for improve shipping quality
+on property:persist.sys.asus.startlog=1
+    start logrecorder
+
+on property:persist.sys.asus.startlog=0
+    stop logrecorder
+
+service logrecorder /system/bin/logcat -vthreadtime -r10000 -n20 -f/data/user_logcat/logcat.txt
+    class late_start
+    disabled
+
+on property:persist.sys.asus.kernellog=1
+    start kmsgwrapper
+
+on property:persist.sys.asus.kernellog=0
+    stop kmsgwrapper
+
+service kmsgwrapper /system/bin/logwrapper cat /proc/kmsg
+    class late_start
+    disabled
+
+# Enable or disable QPST download mode by property
+on property:persist.sys.downloadmode.enable=1
+    write /sys/module/msm_poweroff/parameters/download_mode 1
+
+on property:persist.sys.downloadmode.enable=0
+    write /sys/module/msm_poweroff/parameters/download_mode 0

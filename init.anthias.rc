@@ -1,0 +1,90 @@
+
+import init.asus.rc
+import init.asus.sdcard.rc
+import init.asus.asdf.rc
+import init.asus.usb.rc
+
+on fs
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/tombstones /asdf nosuid nodev barrier=1 noauto_da_alloc
+    chown system shell /asdf
+    chmod 0775 /asdf
+    restorecon_recursive /asdf
+    start system_resize
+    wait /asdf/resize_done 50
+    rm /asdf/resize_done
+    mount_all /fstab.anthias
+
+on early-init
+
+
+on early-boot
+    write /sys/kernel/boot_adsp/boot 1
+
+on boot
+    mount debugfs /sys/kernel/debug /sys/kernel/debug mode=755
+
+    # Set up kernel tracing, but disable it by default
+    chmod 0222 /sys/kernel/debug/tracing/trace_marker
+    write /sys/kernel/debug/tracing/tracing_on 0
+
+    # disable network time update
+    setprop config.disable_networktime true
+
+on post-fs-data
+    symlink /sys/devices/soc0/pcbid_status /data/data/pcbid_status
+
+    # mount asusdata
+    mkdir /data/asusdata 0660 root shell
+    wait /dev/block/platform/msm_sdcc.1/by-name/asusdata
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/asusdata /data/asusdata nosuid nodev barrier=1 noauto_da_alloc
+    chmod 0775 /data/asusdata
+    chown root shell /data/asusdata
+    restorecon_recursive /data/asusdata
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/asusdata /data/asusdata ro remount nosuid nodev barrier=1 noauto_da_alloc
+    start asus_factoryprop
+
+service asus_lateprop /system/bin/init.asus.lateprop.sh
+   class main
+   user root
+   oneshot
+
+service bugreport /system/bin/dumpstate -d -p -B \
+        -o /data/data/com.android.shell/files/bugreports/bugreport
+    class main
+    disabled
+    oneshot
+
+service clockwork_proxy /system/bin/ClockworkProxy
+    class main
+
+service asus-post-boot /system/bin/sh /system/etc/init.asus.post_boot.sh
+    class late_start
+    user root
+    disabled
+    oneshot
+
+service dhcpcd_bt-pan /system/bin/dhcpcd -BKLG
+   class late_start
+   disabled
+   oneshot
+
+service iprenew_bt-pan /system/bin/dhcpcd -n
+   class late_start
+   disabled
+   oneshot
+
+service asus_factoryprop /system/bin/init.asus.factoryprop.sh
+   class main
+   user root
+   disabled
+   oneshot
+
+on property:sys.boot_completed=1
+    start asus-post-boot
+
+service system_resize /sbin/resize2fs_s -Ff /dev/block/platform/msm_sdcc.1/by-name/system 512M
+   user root
+   oneshot
+   seclabel u:r:system_resize:s0
+
+
