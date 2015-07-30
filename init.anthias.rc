@@ -15,7 +15,7 @@ on fs
     mount_all /fstab.anthias
 
 on early-init
-
+    write /sys/block/mmcblk0/queue/scheduler "noop"
 
 on early-boot
     write /sys/kernel/boot_adsp/boot 1
@@ -81,6 +81,7 @@ service asus_factoryprop /system/bin/init.asus.factoryprop.sh
 
 on property:sys.boot_completed=1
     start asus-post-boot
+    write /sys/block/mmcblk0/queue/scheduler "row"
     start mpdecision
 
 service system_resize /sbin/resize2fs_s -Ff /dev/block/platform/msm_sdcc.1/by-name/system 512M
