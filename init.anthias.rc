@@ -42,6 +42,27 @@ on post-fs-data
     restorecon_recursive /data/asusdata
     mount ext4 /dev/block/platform/msm_sdcc.1/by-name/asusdata /data/asusdata ro remount nosuid nodev barrier=1 noauto_da_alloc
     start asus_factoryprop
+    write /sys/module/lpm_levels/enable_low_power/l2 4
+    write /sys/module/msm_pm/modes/cpu0/power_collapse/suspend_enabled 1
+    write /sys/module/msm_pm/modes/cpu1/power_collapse/suspend_enabled 1
+    write /sys/module/msm_pm/modes/cpu2/power_collapse/suspend_enabled 1
+    write /sys/module/msm_pm/modes/cpu3/power_collapse/suspend_enabled 1
+    write /sys/module/msm_pm/modes/cpu0/standalone_power_collapse/suspend_enabled 1
+    write /sys/module/msm_pm/modes/cpu1/standalone_power_collapse/suspend_enabled 1
+    write /sys/module/msm_pm/modes/cpu2/standalone_power_collapse/suspend_enabled 1
+    write /sys/module/msm_pm/modes/cpu3/standalone_power_collapse/suspend_enabled 1
+    write /sys/module/msm_pm/modes/cpu0/standalone_power_collapse/idle_enabled 1
+    write /sys/module/msm_pm/modes/cpu1/standalone_power_collapse/idle_enabled 1
+    write /sys/module/msm_pm/modes/cpu2/standalone_power_collapse/idle_enabled 1
+    write /sys/module/msm_pm/modes/cpu3/standalone_power_collapse/idle_enabled 1
+    write /sys/module/msm_pm/modes/cpu0/power_collapse/idle_enabled 1
+    write /sys/devices/system/cpu/cpu1/online 1
+    write /sys/devices/system/cpu/cpu2/online 1
+    write /sys/devices/system/cpu/cpu3/online 1
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq 300000
 
 service asus_lateprop /system/bin/init.asus.lateprop.sh
    class main
@@ -79,23 +100,24 @@ service asus_factoryprop /system/bin/init.asus.factoryprop.sh
    disabled
    oneshot
 
+on property:init.svc.bootanim=running
+    write /sys/block/mmcblk0/queue/scheduler "noop"
+
+on property:init.svc.bootanim=stopped
+    write /sys/block/mmcblk0/queue/scheduler "row"
+    start mpdecision
+
 on property:sys.boot_completed=1
     start asus-post-boot
 
 on property:init.svc.asus-post-boot=stopped
-    write /sys/block/mmcblk0/queue/scheduler "row"
     write /sys/devices/system/cpu/cpu1/online 1
     write /sys/devices/system/cpu/cpu2/online 1
     write /sys/devices/system/cpu/cpu3/online 1
-    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 300000
-    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq 300000
-    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 300000
-    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq 300000
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "ondemand"
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor "ondemand"
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "ondemand"
-    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "ondemand
-    start mpdecision
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "ondemand"
 
 service system_resize /sbin/resize2fs_s -Ff /dev/block/platform/msm_sdcc.1/by-name/system 512M
    user root
@@ -103,5 +125,7 @@ service system_resize /sbin/resize2fs_s -Ff /dev/block/platform/msm_sdcc.1/by-na
    seclabel u:r:system_resize:s0
 
 service mpdecision /sbin/mpdecision --avg_comp
+   class main
    user root
+   group system
    disabled
