@@ -89,10 +89,10 @@ on property:sys.boot_completed=1
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq 300000
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 300000
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq 300000
-    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "smartmax"
-    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor "smartmax"
-    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "smartmax"
-    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "smartmax
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "ondemand"
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor "ondemand"
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "ondemand"
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "ondemand
     start mpdecision
 
 service system_resize /sbin/resize2fs_s -Ff /dev/block/platform/msm_sdcc.1/by-name/system 512M
