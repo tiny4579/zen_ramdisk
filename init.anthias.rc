@@ -81,6 +81,8 @@ service asus_factoryprop /system/bin/init.asus.factoryprop.sh
 
 on property:sys.boot_completed=1
     start asus-post-boot
+
+on property:init.svc.asus-post-boot=stopped
     write /sys/block/mmcblk0/queue/scheduler "row"
     write /sys/devices/system/cpu/cpu1/online 1
     write /sys/devices/system/cpu/cpu2/online 1
